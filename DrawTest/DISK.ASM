@@ -1,0 +1,363 @@
+; FDD I/O Port
+CR	EQU	0D8H ; FDCコマンドレジスタ
+TR	EQU	0D9H ; FDCトラックレジスタ
+SCR	EQU	0DAH ; FDCセクタレジスタ
+DR	EQU	0DBH ; FDCデータレジスタ
+DM	EQU	0DCH ; ディスクドライブの選択とモーター制御
+HS	EQU	0DDH ; ディスクのサイド(面)選択
+
+; READ DIR
+; LD	A, ドライブ番号
+; LD	HL, ファイルネーム
+; LD	IX, BUFFER(最低2KB)
+; Result Cyフラグ (1:エラー, 0:正常読み込み)
+READ_FILE:
+	PUSH	HL
+	LD	IY, WKIY
+	LD	(DIRNO), A	; ドライブ番号
+	LD	A, 000h
+	LD	(IY+2), A
+	LD	A, 008h
+	LD	(IY+3), A	; 読み込みサイズ2Kバイト
+	LD	BC, 16
+	LD	(STREC), BC	; レコード16 (DIR)
+	CALL	BREAD
+	PUSH	AF
+	CALL	MOFF
+	POP	AF
+	POP	HL
+	RET	C		; Cyが1ならディレクトリ読み込みエラー
+	LD	B, 64
+	PUSH	IX
+	POP	DE
+READ_FILE_1:
+	LD	A, (DE)
+	INC	DE
+	CP	001h
+	JR	NZ, READ_FILE_2 ; モードが01h(Obj)以外は無視
+	PUSH	DE
+	PUSH	HL
+	CALL	CMP_TEXT
+	POP	HL
+	POP	DE
+	JR	C, READ_FILE_3
+READ_FILE_2:
+	; DE = DE + 31
+	EX	DE, HL
+	PUSH	BC
+	LD	BC, 31
+	ADD	HL, BC
+	POP	BC
+	EX	DE, HL
+	; ループ判定
+	DEC	B
+	JR	NZ, READ_FILE_1
+	SCF
+	RET			; ファイルが見つからない
+READ_FILE_3:
+	; 読み込むファイルを見つけた
+	; DE = DE + 19
+	LD	BC, 19
+	EX	DE, HL
+	ADD	HL, BC
+	EX	DE, HL
+	; 読み込みサイズ取得
+	LD	A, (DE)
+	LD	(IY+2), A	; 読み込みサイズ下位バイト設定
+	INC	DE
+	LD	A, (DE)
+	LD	(IY+3), A	; 読み込みサイズ上位バイト設定
+	INC	DE
+	; 読み込みアドレス取得
+;	LD	A, (DE)
+	INC	DE
+;	LD	C, A
+;	LD	A, (DE)
+	INC	DE
+;	LD	B, A
+;	PUSH	BC
+;	POP	IX
+	; DE = DE + 6
+	LD	BC, 6
+	EX	DE, HL
+	ADD	HL, BC
+	EX	DE, HL
+	; 読み込み開始レコード番号
+	LD	A, (DE)
+	INC	DE
+	LD	C, A
+	LD	A, (DE)
+	INC	DE
+	LD	B, A
+	LD	(STREC), BC	; レコード番号設定
+	; 読み込み開始
+	CALL	BREAD
+	PUSH	AF
+	CALL	MOFF
+	POP	AF
+	RET
+
+; READY
+READY:	LD	A, (MTFG)
+	RRCA
+	CALL	MTON
+	LD	A, (DIRNO)	; DRIVE NO GET
+	OR	084H
+	OUT	(DM), A		; DRIVE SELECT MOTON
+	XOR	A
+	CALL	DLY60M
+	LD	HL, 00000H
+REDY0:	DEC	HL
+	LD	A, H
+	OR	L
+	JP	Z, DERROR	; NO DISK
+	IN	A, (CR)		; STATUS GET
+	CPL
+	RLCA
+	JR	C, REDY0
+	LD	A, (DIRNO)
+	LD	C,A
+	LD	HL, CLBF0
+	LD	B, 000H
+	ADD	HL, BC
+	BIT	0, (HL)
+	RET	NZ
+	CALL	RCLB
+	RET
+
+; MOTOR ON
+MTON:	LD	A,080H
+	OUT	(DM), A
+	LD	B, 10		; 1SEC DELAY
+MTD1:	LD	HL, 03C19H
+MTD2:	DEC	HL
+	LD	A, L
+	OR	H
+	JR	NZ, MTD2
+	DJNZ	MTD1
+	LD	A, 1
+	LD	(MTFG), A
+	RET
+
+; MOTOR OFF
+MOFF:	CALL	DLY1M		; 1000US DELAY
+	XOR	A
+	OUT	(DM), A
+	LD	(MTFG), A
+	RET
+
+; SEEK TREATMENT
+SEEK:	LD	A, 01BH
+	CPL
+	OUT	(CR), A
+	CALL	BUSY
+	CALL	DLY60M
+	IN	A, (CR)
+	CPL
+	AND	099H
+	RET
+
+; RECALIBLATION
+RCLB:	PUSH	HL
+	LD	A, 00BH
+	CPL
+	OUT	(CR), A
+	CALL	BUSY
+	CALL	DLY60M
+	IN	A, (CR)
+	CPL
+	AND	085H
+	XOR	004H
+	POP	HL
+	RET	Z
+	JP	DERROR
+
+; BUSY AND WAIT
+BUSY:	PUSH	DE
+	PUSH	HL
+	CALL	DLY80U
+	LD	E, 7
+BUSY2:	LD	HL, 000H
+BUSY0:	DEC	HL
+	LD	A, H
+	OR	L
+	JR	Z, BUSY1
+	IN	A, (CR)
+	CPL
+	RRCA
+	JR	C, BUSY0
+	POP	HL
+	POP	DE
+	RET
+BUSY1:	DEC	E
+	JR	NZ, BUSY2
+	JP	DERROR
+
+; DATA CHECK
+CONVRT:	LD	B, 0
+	LD	DE, 16
+	LD	HL, (STREC)		; START RECORD
+	XOR	A
+TRANS:	SBC	HL, DE
+	JR	C, TRANS1
+	INC	B
+	JR	TRANS
+TRANS1:	ADD	HL, DE
+	LD	H, B
+	INC	L
+	LD	(IY+4), H
+	LD	(IY+5), L
+DCHK:	LD	A, (DIRNO)
+	CP	4
+	JR	NC, DTCK1
+	LD	A, (IY+4)
+MAXTRK:	CP	160		; MAX TRACK ( 70 -> 35TRACK 2D)
+				; MAX TRACK (160 -> 80TRACK 2D)
+	JR	NC, DTCK1
+	LD	A, (IY+5)
+	OR	A
+	JR	Z, DTCK1
+	CP	17		; MAX SECTOR
+	JR	NC, DTCK1
+	LD	A, (IY+2)
+	OR	(IY+3)
+	RET	NZ
+DTCK1:	JP	DERROR
+
+; SEQENTIAL READ
+; DIRNO: ドライブ番号
+; IX: 読み込みアドレス
+; IY: 6バイトのワークエリア
+; STREC: 読み込みレコード番号
+; Result Cyフラグ (1:エラー, 0:正常読み込み)
+BREAD:	DI
+	CALL	CONVRT
+	LD	A, 10
+	LD	(RETRY), A
+READ1:	CALL	READY
+	LD	D, (IY+3)
+	LD	A, (IY+2)
+	OR	A
+	JR	Z, RE0
+	INC	D
+RE0:	LD	A, (IY+5)
+	LD	(IY+1), A
+	LD	A, (IY+4)
+	LD	(IY+0), A
+	PUSH	IX
+	POP	HL
+RE8:	SRL	A
+	CPL
+	OUT	(DR), A
+	JR	NC, RE1
+	LD	A, 001H
+	JR	RE2
+RE1:	LD	A, 000H
+RE2:	CPL
+	OUT	(HS), A
+	CALL	SEEK
+	JR	NZ, REE
+	LD	C, 0DBH
+	LD	A, (IY+0)
+	SRL	A
+	CPL
+	OUT	(TR), A
+	LD	A, (IY+1)
+	CPL
+	OUT	(SCR),A
+	EXX
+	LD	HL, RE3
+	PUSH	HL
+	EXX
+	LD	A, 094H		;READ & CMD
+	CPL
+	OUT	(CR), A
+	CALL	WAIT
+RE6:	LD	B, 000H
+RE4:	IN	A, (CR)
+	RRCA
+	RET	C
+	RRCA
+	JR	C, RE4
+	INI
+	JR	NZ, RE4
+	INC	(IY+1)
+	LD	A, (IY+1)
+	CP	17
+	JR	Z, RETS
+	DEC	D
+	JR	NZ, RE6
+	JR	RE5
+RETS:	DEC	D
+RE5:	LD	A, 0D8H		; FORCE INTER RUPT
+	CPL
+	OUT	(CR), A
+	CALL	BUSY
+RE3:	IN	A, (CR)
+	CPL
+	AND	0FFH
+	JR	NZ, REE
+	EXX
+	POP	HL
+	EXX
+	LD	A, (IY+1)
+	CP	17
+	JR	NZ, REX
+	LD	A, 001H
+	LD	(IY+1), A
+	INC	(IY+0)
+REX:	LD	A, D
+	OR	A
+	JR	NZ, RE7
+	LD	A, 080H
+	OUT	(DM), A
+	RET
+RE7:	LD	A, (IY+0)
+	JR	RE8
+REE:	LD	A, (RETRY)
+	DEC	A
+	LD	(RETRY), A
+	JR	Z, DERROR
+	CALL	RCLB
+	JP	READ1
+
+; WAIT AND BUSY OFF
+WAIT:	PUSH	DE
+	PUSH	HL
+	CALL	DLY80U
+WAIT2:	LD	HL, 00000H
+WAIT0:	DEC	HL
+	LD	A, H
+	OR	L
+	JR	Z, WAIT1
+	IN	A, (CR)
+	CPL
+	RRCA
+	JR	NC, WAIT0
+	POP	HL
+	POP	DE
+	RET
+WAIT1:	DEC	E
+	JR	NZ, WAIT2
+	JR	DERROR
+
+; ディスクエラー
+DERROR:	CALL	MOFF
+	LD	A, 0A5H
+	OUT	(TR), A
+	CALL	DLY80U
+	LD	HL, ERROR_MESSAGE
+	CALL	MSGOUT_PRINTER
+	SCF
+	RET
+
+CLBF0:	DW	0 ; ?
+STREC:	DW	0 ; 読込み開始セクタ
+DIRNO:	DB	0 ; ドライブ番号(0-3)
+MTFG:	DB	0 ; モータ0:OFF, 1:ON
+RETRY:	DB	0 ; 残りリトライ回数
+WKIY:	DS	6 ; FD READ 指示、ワーク
+WKIX:	DW	0 ; 読み込みアドレス
+
+ERROR_MESSAGE:
+	DB	"Disk Error\n", 0
