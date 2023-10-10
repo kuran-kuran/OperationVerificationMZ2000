@@ -91,7 +91,7 @@
 13B3    CD 86 1B        	CALL	ENABLE_TEXT_VRAM_ADDR
 13B6
 13B6                    ; テキスト優先、文字色白
-13B6    3E 0F           	LD	A, 0Fh
+13B6    3E 07           	LD	A, 07h
 13B8    D3 F5           	OUT	(0F5h), A
 13BA                    ; 背景色黒
 13BA    3E 00           	LD	A, 0

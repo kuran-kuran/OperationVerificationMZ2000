@@ -28,7 +28,7 @@ START:
 	CALL	ENABLE_TEXT_VRAM_ADDR
 
 ; テキスト優先、文字色白
-	LD	A, 0Fh
+	LD	A, 07h
 	OUT	(0F5h), A
 ; 背景色黒
 	LD	A, 0
