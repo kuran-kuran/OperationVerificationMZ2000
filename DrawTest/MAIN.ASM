@@ -27,8 +27,8 @@ START:
 	CALL	WIDTH
 	CALL	ENABLE_TEXT_VRAM_ADDR
 
-; テキスト優先、文字色白
-	LD	A, 07h
+; グラフィック優先、文字色白
+	LD	A, 0Fh
 	OUT	(0F5h), A
 ; 背景色黒
 	LD	A, 0
