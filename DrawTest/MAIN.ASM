@@ -8,7 +8,6 @@ START:
 	DI
 
 ; 8255 初期化
-	OUT	(0E0h), A
 	LD	A, 082h		; 8255 A=out B=in C=out
 	OUT	(0E3H), A
 	LD	A, 058h		; b3:BST=1 b4:OPEN=1 b6:WRITE=1
@@ -28,7 +27,7 @@ START:
 	CALL	ENABLE_TEXT_VRAM_ADDR
 
 ; グラフィック優先、文字色白
-	LD	A, 0Fh
+	LD	A, 07h
 	OUT	(0F5h), A
 ; 背景色黒
 	LD	A, 0
@@ -53,6 +52,7 @@ START:
 	OUT	(0F6h), A
 	IN	A, (0E0h)
 	SET	4, A
+	OUT	(0E0h), A
 
 ; G-VRAM有効
 	CALL	ENABLE_GRAPHIC_ADDR

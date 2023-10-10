@@ -71,51 +71,51 @@
 13A3    F3              	DI
 13A4
 13A4                    ; 8255 初期化
-13A4    D3 E0           	OUT	(0E0h), A
-13A6    3E 82           	LD	A, 082h		; 8255 A=out B=in C=out
-13A8    D3 E3           	OUT	(0E3H), A
-13AA    3E 58           	LD	A, 058h		; b3:BST=1 b4:OPEN=1 b6:WRITE=1
-13AC    D3 E2           	OUT	(0E2H), A
-13AE                    ;
-13AE                    ; PIO 初期化
-13AE                    ;	LD	A, 00Fh		; PIO A=out
-13AE                    ;	OUT	(0E9H), A
-13AE                    ;	LD	A, 0CFh		; PIO B=in
-13AE                    ;	OUT	(0EBH), A
-13AE                    ;	LD	A, 0FFh
-13AE                    ;	OUT	(0EBH), A
-13AE
-13AE                    ; テキスト初期化
-13AE    3E 50           	LD	A, 80
-13B0    CD 5A 1B        	CALL	WIDTH
-13B3    CD 86 1B        	CALL	ENABLE_TEXT_VRAM_ADDR
-13B6
-13B6                    ; テキスト優先、文字色白
-13B6    3E 07           	LD	A, 07h
-13B8    D3 F5           	OUT	(0F5h), A
-13BA                    ; 背景色黒
-13BA    3E 00           	LD	A, 0
-13BC    D3 F4           	OUT	(0F4h), A
-13BE
-13BE                    ; テキストクリア
-13BE    CD 99 1C        	CALL	CLS
-13C1
-13C1                    ; 左上指定
-13C1    11 00 00        	LD	DE, 0
-13C4    CD 9C 1B        	CALL	CURSOR
-13C7
-13C7                    ; メッセージ表示
-13C7    21 23 25        	LD	HL, MSG
-13CA    CD 1E 1C        	CALL	PRINT_MSG
-13CD
-13CD                    ; 改行
-13CD    CD C9 1B        	CALL	NEW_LINE
-13D0
-13D0                    ; グラフィック表示初期化
-13D0    3E 07           	LD	A, 7
-13D2    D3 F6           	OUT	(0F6h), A
-13D4    DB E0           	IN	A, (0E0h)
-13D6    CB E7           	SET	4, A
+13A4    3E 82           	LD	A, 082h		; 8255 A=out B=in C=out
+13A6    D3 E3           	OUT	(0E3H), A
+13A8    3E 58           	LD	A, 058h		; b3:BST=1 b4:OPEN=1 b6:WRITE=1
+13AA    D3 E2           	OUT	(0E2H), A
+13AC                    ;
+13AC                    ; PIO 初期化
+13AC                    ;	LD	A, 00Fh		; PIO A=out
+13AC                    ;	OUT	(0E9H), A
+13AC                    ;	LD	A, 0CFh		; PIO B=in
+13AC                    ;	OUT	(0EBH), A
+13AC                    ;	LD	A, 0FFh
+13AC                    ;	OUT	(0EBH), A
+13AC
+13AC                    ; テキスト初期化
+13AC    3E 50           	LD	A, 80
+13AE    CD 5A 1B        	CALL	WIDTH
+13B1    CD 86 1B        	CALL	ENABLE_TEXT_VRAM_ADDR
+13B4
+13B4                    ; グラフィック優先、文字色白
+13B4    3E 07           	LD	A, 07h
+13B6    D3 F5           	OUT	(0F5h), A
+13B8                    ; 背景色黒
+13B8    3E 00           	LD	A, 0
+13BA    D3 F4           	OUT	(0F4h), A
+13BC
+13BC                    ; テキストクリア
+13BC    CD 99 1C        	CALL	CLS
+13BF
+13BF                    ; 左上指定
+13BF    11 00 00        	LD	DE, 0
+13C2    CD 9C 1B        	CALL	CURSOR
+13C5
+13C5                    ; メッセージ表示
+13C5    21 23 25        	LD	HL, MSG
+13C8    CD 1E 1C        	CALL	PRINT_MSG
+13CB
+13CB                    ; 改行
+13CB    CD C9 1B        	CALL	NEW_LINE
+13CE
+13CE                    ; グラフィック表示初期化
+13CE    3E 07           	LD	A, 7
+13D0    D3 F6           	OUT	(0F6h), A
+13D2    DB E0           	IN	A, (0E0h)
+13D4    CB E7           	SET	4, A
+13D6    D3 E0           	OUT	(0E0h), A
 13D8
 13D8                    ; G-VRAM有効
 13D8    CD D3 1C        	CALL	ENABLE_GRAPHIC_ADDR
