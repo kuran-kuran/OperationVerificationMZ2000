@@ -35,21 +35,28 @@ START:
 
 ; テキストクリア
 	CALL	CLS
+
 ; 左上指定
 	LD	DE, 0
 	CALL	CURSOR
+
 ; メッセージ表示
 	LD	HL, MSG
 	CALL	PRINT_MSG
+
 ; 改行
 	CALL	NEW_LINE
+
 ; グラフィック表示初期化
 	LD	A, 7
 	OUT	(0F6h), A
+
 ; G-VRAM有効
 	CALL	ENABLE_GRAPHIC_ADDR
+
 ; グラフィック画面クリア
 	CALL	GRAPHICS_CLS_ALL
+
 ; ソルバルウ表示
 ; 青
 	LD	A, 1
@@ -67,6 +74,26 @@ START:
 	LD	A, 3
 	OUT	(0F7h), A
 	LD	DE, 0C000h + 80 * 16 + 2
+	LD	HL, SOLVALOU_G
+	CALL	PUT32x16
+
+; ソルバルウ表示
+; 青
+	LD	A, 1
+	OUT	(0F7h), A
+	LD	DE, 0C000h + 80 * 32 + 6
+	LD	HL, SOLVALOU_B
+	CALL	PUT32x16
+; 赤
+	LD	A, 2
+	OUT	(0F7h), A
+	LD	DE, 0C000h + 80 * 48 + 10
+	LD	HL, SOLVALOU_R
+	CALL	PUT32x16
+; 緑
+	LD	A, 3
+	OUT	(0F7h), A
+	LD	DE, 0C000h + 80 * 64 + 14
 	LD	HL, SOLVALOU_G
 	CALL	PUT32x16
 
