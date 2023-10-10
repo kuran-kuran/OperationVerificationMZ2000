@@ -14,22 +14,22 @@ START:
 	OUT	(0E2H), A
 ;
 ; PIO 初期化
-	LD	A, 00Fh		; PIO A=out
-	OUT	(0E9H), A
-	LD	A, 0CFh		; PIO B=in
-	OUT	(0EBH), A
-	LD	A, 0FFh
-	OUT	(0EBH), A
+;	LD	A, 00Fh		; PIO A=out
+;	OUT	(0E9H), A
+;	LD	A, 0CFh		; PIO B=in
+;	OUT	(0EBH), A
+;	LD	A, 0FFh
+;	OUT	(0EBH), A
 
 ; テキスト初期化
 	LD	A, 80
 	CALL	WIDTH
 	CALL	ENABLE_TEXT_VRAM_ADDR
 
-; テキスト優先、文字色赤
+; テキスト優先、文字色白
 	LD	A, 0Fh
 	OUT	(0F5h), A
-; 背景色青
+; 背景色黒
 	LD	A, 0
 	OUT	(0F4h), A
 
@@ -43,7 +43,7 @@ START:
 	CALL	PRINT_MSG
 ; 改行
 	CALL	NEW_LINE
-; グラフィック初期化
+; グラフィック表示初期化
 	LD	A, 7
 	OUT	(0F6h), A
 ; G-VRAM有効
