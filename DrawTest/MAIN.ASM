@@ -8,8 +8,6 @@ START:
 	DI
 
 ; 8255 初期化
-	IN	A, (0E0h)
-	SET	4, A
 	OUT	(0E0h), A
 	LD	A, 082h		; 8255 A=out B=in C=out
 	OUT	(0E3H), A
@@ -51,8 +49,10 @@ START:
 	CALL	NEW_LINE
 
 ; グラフィック表示初期化
-	LD	A, 15
+	LD	A, 7
 	OUT	(0F6h), A
+	IN	A, (0E0h)
+	SET	4, A
 
 ; G-VRAM有効
 	CALL	ENABLE_GRAPHIC_ADDR
