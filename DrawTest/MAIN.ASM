@@ -8,6 +8,9 @@ START:
 	DI
 
 ; 8255 èâä˙âª
+	IN	A, (0E0h)
+	SET	4, A
+	OUT	(0E0h), A
 	LD	A, 082h		; 8255 A=out B=in C=out
 	OUT	(0E3H), A
 	LD	A, 058h		; b3:BST=1 b4:OPEN=1 b6:WRITE=1
