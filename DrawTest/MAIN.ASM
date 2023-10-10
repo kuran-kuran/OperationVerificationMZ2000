@@ -51,7 +51,7 @@ START:
 	CALL	NEW_LINE
 
 ; グラフィック表示初期化
-	LD	A, 7
+	LD	A, 15
 	OUT	(0F6h), A
 
 ; G-VRAM有効

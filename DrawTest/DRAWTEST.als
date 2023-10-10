@@ -114,7 +114,7 @@
 13D1    CD C9 1B        	CALL	NEW_LINE
 13D4
 13D4                    ; グラフィック表示初期化
-13D4    3E 07           	LD	A, 7
+13D4    3E 0F           	LD	A, 15
 13D6    D3 F6           	OUT	(0F6h), A
 13D8
 13D8                    ; G-VRAM有効
